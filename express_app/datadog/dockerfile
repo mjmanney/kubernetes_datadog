@@ -1,0 +1,2 @@
+FROM datadog/agent
+#ADD conf.d/mongodb.yaml /etc/dd-agent/conf.d/mongodb.yaml

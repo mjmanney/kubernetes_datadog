@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expressapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: expressapp
+  template:
+    metadata:
+      labels:
+        app: expressapp
+      # annotations:
+      #   ad.datadoghq.com/expressapp.check_names: '["prometheus"]'
+      #   ad.datadoghq.com/expressapp.init_configs: '[{}]'
+      #   ad.datadoghq.com/expressapp.instances: '[{"prometheus_url":"%%host%%/metrics","metrics":["*"],"namespace":"apple"}]'
+        # 6.5 ad.datadoghq.com/expressapp.logs: '[{"type":"file","path":"/var/log/mylog.json","service":"flask","source":"python","sourcecategory":"sourcecode"}]'
+    spec:
+      containers:
+      # express container
+      - name: expressapp
+        image: michaelmanney/sample_express:117
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DD_AGENT_SERVICE_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: DD_AGENT_SERVICE_PORT
+          value: '8126'
+        - name: DD_AGENT_STATSD_PORT
+          value: '8125'
+      # # mongo container
+      # - name: mongo
+      #   image: mongo:3.4
+      #   imagePullPolicy: IfNotPresent
+      #   env:
+      #   - name: MONGO_INITDB_DATABASE # taken from docker compose
+      #     value: hackdb # I think this creates a DB named hackdb, check code if this is referenced
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: expressapp
+spec:
+  selector:
+    app: expressapp
+  ports:
+  - name: http
+    protocol: TCP
+    port: 3000
+  type: LoadBalancer
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: cm-datadog-confd
+  namespace: default
+# data:
+#   flasklogs.yaml: |-
+#     init_config:
+#     instances:
+#     logs:
+#     - type: file
+#       path: /var/log/mylog.json
+#       service: flask
+#       source: python
+#       sourcecategory: sourcecode 

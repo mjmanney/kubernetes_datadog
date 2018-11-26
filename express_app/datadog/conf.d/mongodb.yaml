@@ -1,0 +1,8 @@
+  init_config:
+  instances:
+    - server: mongodb://datadog:datadog@localhost:27017/admin #might need to rename localhost to mongodb service
+      additional_metrics:
+        - collection       # collect metrics for each collection
+        - metrics.commands
+        - tcmalloc
+        - top

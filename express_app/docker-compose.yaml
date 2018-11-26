@@ -1,0 +1,33 @@
+version: '3'
+services:
+  web:
+    build: .   # builds the  node web app using the dockerfile from this directory
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:3000"
+  mongodb:
+    image: mongo:3.4 # pulls the image from dockerhub 
+    depends_on:
+      - web
+    environment:
+#      - MONGO_INITDB_ROOT_USERNAME=admin    # leaving this causes issues with authentication
+#      - MONGO_INITDB_ROOT_PASSWORD=admin    # need to figure out a way to use correct auth
+      - MONGO_INITDB_DATABASE=hackdb
+#      bash -c "mongod &&.                   # this user is required for the mongo integration
+#             use admin &&
+#             db.createUser({"user":"datadog","pwd": "datadog","roles" : [{role: 'read', db: 'admin' },{role: 'clusterMonitor', db: 'admin'},{role: 'read', db: 'local'}]})"
+  datadog:
+    build: datadog # builds the image from datadog folder containing dockerfile
+    container_name: datadog-agent
+#    links:
+#      - mongodb
+    environment:
+      - API_KEY=a88c20682ae6f4bce7bbcea4b5091903
+      - DD_APM_ENABLED=true                    
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_APM_ANALYZED_SPANS=dd-trace|express.request=1 #trace search 
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc/mounts:/host/proc/mounts:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
